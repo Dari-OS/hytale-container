@@ -16,11 +16,10 @@ log_action(){ echo -e "${RED}${BOLD}[ACTION REQUIRED]${NC} $1"; }
 
 export HYTALE_DIR="/data/hytale"
 export INSTALLER_DIR="/data/installer"
+export CONSOLE_PIPE="/data/console.pipe"
 
 mkdir -p "$HYTALE_DIR" "$INSTALLER_DIR"
 
-# We are starting as root to fix the volume permission problems
-# and then restart the script as the correct hytale user
 if [ "$(id -u)" = "0" ]; then
     log_info "Fixing permissions on data directory..."
     chown -R hytale:hytale /data
@@ -28,12 +27,16 @@ if [ "$(id -u)" = "0" ]; then
     exec gosu hytale "$0" "$@"
 fi
 
+if [ ! -p "$CONSOLE_PIPE" ]; then
+    mkfifo "$CONSOLE_PIPE"
+    chmod 600 "$CONSOLE_PIPE"
+fi
+
 echo -e "${CYAN}========================================================${NC}"
 echo -e "${CYAN}           HYTALE SERVER - DOCKERIZED                   ${NC}"
 echo -e "${CYAN}========================================================${NC}"
 echo -e "  ${BOLD}:: Patchline ::${NC}   $HYTALE_PATCHLINE"
 echo -e "  ${BOLD}:: Port      ::${NC}   $SERVER_PORT (UDP)"
-echo -e "  ${BOLD}:: Auto-Upd  ::${NC}   $UPDATE_ON_BOOT"
 echo -e "  ${BOLD}:: Console   ::${NC}   ./hytale-cli"
 echo -e "${CYAN}========================================================${NC}"
 echo ""
@@ -92,7 +95,12 @@ echo ""
 log_info "Starting Hytale Server..."
 cd "$HYTALE_DIR/Server"
 
-exec java -Xms${JAVA_MS} -Xmx${JAVA_MX} \
+trap 'kill -SIGTERM $SERVER_PID' SIGTERM SIGINT
+
+tail -f "$CONSOLE_PIPE" | java -Xms${JAVA_MS} -Xmx${JAVA_MX} \
     -jar HytaleServer.jar \
     --assets ../Assets.zip \
-    --bind 0.0.0.0:$SERVER_PORT
+    --bind 0.0.0.0:$SERVER_PORT &
+
+SERVER_PID=$!
+wait "$SERVER_PID"

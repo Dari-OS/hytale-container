@@ -5,10 +5,12 @@ RUN apt-get update && apt-get install -y \
     unzip \
     iproute2 \
     gosu \
+    libsecret-1-0 \
+    gnome-keyring \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -g 1000 hytale && \
-    useradd -m -u 1000 -g hytale -s /bin/bash hytale
+RUN groupadd -g 1001 hytale && \
+    useradd -m -u 1001 -g hytale -s /bin/bash hytale
 
 WORKDIR /data
 

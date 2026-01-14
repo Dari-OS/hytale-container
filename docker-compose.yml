@@ -18,6 +18,10 @@ services:
     # prevent kernel module loading
     cap_drop:
       - ALL
-    # prevent the container from gaining new privileges
+    cap_add:
+      - CHOWN # Required for file permissions
+      - SETUID # Required for gosu
+      - SETGID # Required for gosu
+      - DAC_OVERRIDE
     security_opt:
       - no-new-privileges:true

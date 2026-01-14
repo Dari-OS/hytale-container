@@ -1,15 +1,14 @@
 #!/bin/sh
-
 CONTAINER="hytale_server"
+PIPE="/data/console.pipe"
 
-if ! command -v docker >/dev/null 2>&1; then
-    echo "Error: Docker not found."
-    exit 1
-fi
+if [ -z "$(docker ps -q -f name=$CONTAINER)" ]; then echo "Error: Server not running."; exit 1; fi
 
-if [ -z "$(docker ps -q -f name=$CONTAINER)" ]; then
-    echo "Error: Server not running."
-    exit 1
-fi
+docker logs -f -n 0 "$CONTAINER" &
+LOG_PID=$!
+trap 'kill $LOG_PID 2>/dev/null; exit 0' EXIT SIGINT
 
-docker attach --sig-proxy=false "$CONTAINER"
+while read -e cmd; do
+    if [ -z "$cmd" ]; then continue; fi
+    docker exec -u hytale "$CONTAINER" sh -c "echo \"$cmd\" > $PIPE"
+done
