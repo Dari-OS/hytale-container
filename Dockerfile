@@ -1,11 +1,14 @@
-# Using adoptium 25
 FROM eclipse-temurin:25-jdk
 
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     iproute2 \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -g 1000 hytale && \
+    useradd -m -u 1000 -g hytale -s /bin/bash hytale
 
 WORKDIR /data
 

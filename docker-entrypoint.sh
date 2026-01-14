@@ -12,18 +12,20 @@ NC='\033[0m'
 log_info()  { echo -e "${BLUE}[INFO]${NC}  $1"; }
 log_ok()    { echo -e "${GREEN}[OK]${NC}    $1"; }
 log_warn()  { echo -e "${YELLOW}[WARN]${NC}  $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 log_action(){ echo -e "${RED}${BOLD}[ACTION REQUIRED]${NC} $1"; }
 
 export HYTALE_DIR="/data/hytale"
 export INSTALLER_DIR="/data/installer"
-export CONSOLE_PIPE="/data/console.pipe"
 
 mkdir -p "$HYTALE_DIR" "$INSTALLER_DIR"
 
-if [ ! -p "$CONSOLE_PIPE" ]; then
-    mkfifo "$CONSOLE_PIPE"
-    chmod 666 "$CONSOLE_PIPE"
+# We are starting as root to fix the volume permission problems
+# and then restart the script as the correct hytale user
+if [ "$(id -u)" = "0" ]; then
+    log_info "Fixing permissions on data directory..."
+    chown -R hytale:hytale /data
+    log_info "Dropping privileges to user 'hytale'..."
+    exec gosu hytale "$0" "$@"
 fi
 
 echo -e "${CYAN}========================================================${NC}"
@@ -32,7 +34,7 @@ echo -e "${CYAN}========================================================${NC}"
 echo -e "  ${BOLD}:: Patchline ::${NC}   $HYTALE_PATCHLINE"
 echo -e "  ${BOLD}:: Port      ::${NC}   $SERVER_PORT (UDP)"
 echo -e "  ${BOLD}:: Auto-Upd  ::${NC}   $UPDATE_ON_BOOT"
-echo -e "  ${BOLD}:: CLI Tool  ::${NC}   ./hytale-cli <command>"
+echo -e "  ${BOLD}:: Console   ::${NC}   ./hytale-cli"
 echo -e "${CYAN}========================================================${NC}"
 echo ""
 
@@ -90,12 +92,7 @@ echo ""
 log_info "Starting Hytale Server..."
 cd "$HYTALE_DIR/Server"
 
-trap 'kill -SIGTERM $SERVER_PID' SIGTERM SIGINT
-
-tail -f "$CONSOLE_PIPE" | java -Xms${JAVA_MS} -Xmx${JAVA_MX} \
+exec java -Xms${JAVA_MS} -Xmx${JAVA_MX} \
     -jar HytaleServer.jar \
     --assets ../Assets.zip \
-    --bind 0.0.0.0:$SERVER_PORT &
-
-SERVER_PID=$!
-wait "$SERVER_PID"
+    --bind 0.0.0.0:$SERVER_PORT

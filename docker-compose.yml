@@ -15,3 +15,9 @@ services:
       - ./server:/data
     stdin_open: true
     tty: true
+    # prevent kernel module loading
+    cap_drop:
+      - ALL
+    # prevent the container from gaining new privileges
+    security_opt:
+      - no-new-privileges:true
