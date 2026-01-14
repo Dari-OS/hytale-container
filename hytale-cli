@@ -1,0 +1,15 @@
+#!/bin/sh
+
+CONTAINER="hytale_server"
+
+if ! command -v docker >/dev/null 2>&1; then
+    echo "Error: Docker not found."
+    exit 1
+fi
+
+if [ -z "$(docker ps -q -f name=$CONTAINER)" ]; then
+    echo "Error: Server not running."
+    exit 1
+fi
+
+docker attach --sig-proxy=false "$CONTAINER"

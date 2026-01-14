@@ -1,0 +1,17 @@
+services:
+  hytale:
+    build: .
+    container_name: hytale_server
+    restart: unless-stopped
+    ports:
+      - "5520:5520/udp"
+    environment:
+      - HYTALE_PATCHLINE=release
+      - UPDATE_ON_BOOT=false
+      - SERVER_PORT=5520
+      - JAVA_MS=4G
+      - JAVA_MX=8G
+    volumes:
+      - ./server:/data
+    stdin_open: true
+    tty: true
