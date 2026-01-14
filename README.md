@@ -65,7 +65,7 @@ Once the download finishes, the server will start. You will see a log entry: ` N
 ```
 
 2. The logs (or your console) will display a **new** URL and Code. Visit the link to approve.
-3. **Crucial:** By default, credentials are stored in memory and lost on restart. Enable persistence to save them to the volume:
+3. **Crucial:** By default credentials are stored in memory and lost on restart. Enable persistence to save them to the volume:
 
 ```bash
 ./hytale-cli auth persistence Encrypted

@@ -4,6 +4,11 @@ PIPE="/data/console.pipe"
 
 if [ -z "$(docker ps -q -f name=$CONTAINER)" ]; then echo "Error: Server not running."; exit 1; fi
 
+if [ -n "$1" ]; then
+    docker exec -u hytale "$CONTAINER" sh -c "echo \"$*\" > $PIPE"
+    exit 0
+fi
+
 docker logs -f -n 0 "$CONTAINER" &
 LOG_PID=$!
 trap 'kill $LOG_PID 2>/dev/null; exit 0' EXIT SIGINT
